@@ -68,7 +68,8 @@
     .primary:hover:not(:disabled) { background: var(--green-dark); }
     .primary:disabled { opacity: .62; cursor: not-allowed; }
     .secondary { min-height: 40px; border: 1px solid #b9ccc1; background: white; color: var(--green-dark); }
-    .secondary:hover { background: var(--mint); }
+    .secondary:hover:not(:disabled):not([aria-disabled="true"]) { background: var(--mint); }
+    .secondary:disabled, .secondary[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
     .submit-hint { color: var(--muted); font-size: .8rem; }
     .status { margin-top: 18px; padding: 14px 15px; border-radius: 12px; border: 1px solid var(--line); background: #f7faf7; white-space: pre-wrap; overflow-wrap: anywhere; }
     .status:empty { display: none; }
@@ -194,14 +195,15 @@
           <span id="copyFeedback" class="copy-feedback" aria-live="polite"></span>
         </div>
       </div>
-      <section id="whatsappArea" class="whatsapp-box" aria-labelledby="whatsappTitle" hidden>
+      <section id="whatsappArea" class="whatsapp-box" aria-labelledby="whatsappTitle">
         <h3 id="whatsappTitle">Rascunho manual para WhatsApp</h3>
-        <p>Revise e copie o texto ou abra o WhatsApp para continuar manualmente. Nada será enviado automaticamente.</p>
+        <p>O rascunho fica disponível antes do envio da contagem. Revise o texto e, se quiser, abra o WhatsApp para enviar manualmente; nada é enviado automaticamente.</p>
         <label for="whatsappDraft">Texto do rascunho</label>
-        <textarea id="whatsappDraft" class="whatsapp-draft" readonly></textarea>
+        <textarea id="whatsappDraft" class="whatsapp-draft" readonly placeholder="Selecione a equipe e o horário e preencha em uso e não em uso em pelo menos uma Rua."></textarea>
+        <p id="whatsappStatus" class="hint" aria-live="polite">Preencha equipe, horário e as duas quantidades de pelo menos uma Rua para preparar o texto.</p>
         <div class="copy-row">
-          <button id="copyWhatsApp" class="secondary" type="button">Copiar texto</button>
-          <a id="openWhatsApp" class="secondary" target="_blank" rel="noopener noreferrer">Abrir WhatsApp</a>
+          <button id="copyWhatsApp" class="secondary" type="button" disabled>Copiar texto</button>
+          <a id="openWhatsApp" class="secondary" target="_blank" rel="noopener noreferrer" aria-disabled="true" tabindex="-1">Abrir WhatsApp</a>
           <span id="whatsappFeedback" class="copy-feedback" aria-live="polite"></span>
         </div>
       </section>
@@ -390,6 +392,7 @@
               document.getElementById(`in-use-${index}`).setCustomValidity('');
               document.getElementById(`not-in-use-${index}`).setCustomValidity('');
               updateStreetTotal(index);
+              refreshWhatsAppDraft();
             });
           }
           field.append(label, input);
@@ -455,6 +458,68 @@
       ].join('\n')).join('\n\n');
     }
 
+    function refreshWhatsAppDraft() {
+      if (finalOutcome) return;
+      const draftField = document.getElementById('whatsappDraft');
+      const status = document.getElementById('whatsappStatus');
+      const copyButton = document.getElementById('copyWhatsApp');
+      const openButton = document.getElementById('openWhatsApp');
+      const team = TEAMS.find(item => item.id === equipeSelect.value);
+      const records = [];
+      let invalidEntry = false;
+      let incompleteEntry = false;
+
+      if (team) {
+        team.ruas.forEach((rua, index) => {
+          const emUsoRaw = document.getElementById(`in-use-${index}`).value;
+          const naoEmUsoRaw = document.getElementById(`not-in-use-${index}`).value;
+          if (emUsoRaw === '' && naoEmUsoRaw === '') return;
+          if (emUsoRaw === '' || naoEmUsoRaw === '') {
+            incompleteEntry = true;
+            return;
+          }
+          const isCount = value => /^\d+$/.test(value) && Number.isSafeInteger(Number(value));
+          if (!isCount(emUsoRaw) || !isCount(naoEmUsoRaw)) {
+            invalidEntry = true;
+            return;
+          }
+          const emUso = Number(emUsoRaw);
+          const naoEmUso = Number(naoEmUsoRaw);
+          const total = emUso + naoEmUso;
+          if (!Number.isSafeInteger(total)) {
+            invalidEntry = true;
+            return;
+          }
+          records.push({ rua, emUso, naoEmUso, total });
+        });
+      }
+
+      let message = '';
+      if (!team) message = 'Selecione uma equipe para começar.';
+      else if (!turnoSelect.value) message = 'Selecione o horário para preparar o texto.';
+      else if (incompleteEntry) message = 'Preencha as duas quantidades em cada Rua iniciada.';
+      else if (invalidEntry) message = 'Use números inteiros não negativos em ambas as quantidades.';
+      else if (records.length === 0) message = 'Preencha as duas quantidades de pelo menos uma Rua; use 0 quando não houver usuários.';
+
+      if (message) {
+        draftField.value = '';
+        copyButton.disabled = true;
+        openButton.removeAttribute('href');
+        openButton.setAttribute('aria-disabled', 'true');
+        openButton.setAttribute('tabindex', '-1');
+        status.textContent = message;
+        return;
+      }
+
+      const draft = buildWhatsAppDraft(records, saoPauloToday(), turnoSelect.value);
+      draftField.value = draft;
+      copyButton.disabled = false;
+      openButton.href = `https://wa.me/?text=${encodeURIComponent(draft)}`;
+      openButton.setAttribute('aria-disabled', 'false');
+      openButton.removeAttribute('tabindex');
+      status.textContent = 'Rascunho pronto para revisar. A mensagem só será enviada se você confirmar no WhatsApp.';
+    }
+
     async function copyText(text, feedback, successMessage, failureMessage) {
       try {
         if (navigator.clipboard && window.isSecureContext) {
@@ -502,13 +567,20 @@
       showMessage(message, 'uncertain');
     }
 
-    equipeSelect.addEventListener('change', renderStreets);
+    equipeSelect.addEventListener('change', () => {
+      renderStreets();
+      refreshWhatsAppDraft();
+    });
+    turnoSelect.addEventListener('change', refreshWhatsAppDraft);
     proofMethod.addEventListener('change', setProofFields);
     document.getElementById('copyUrl').addEventListener('click', async () => {
       await copyText(returnedUrl.href, copyFeedback, 'URL copiada.', 'Não foi possível copiar automaticamente. Selecione e copie a URL acima.');
     });
     document.getElementById('copyWhatsApp').addEventListener('click', async () => {
       await copyText(document.getElementById('whatsappDraft').value, document.getElementById('whatsappFeedback'), 'Rascunho copiado.', 'Não foi possível copiar automaticamente. Selecione e copie o texto acima.');
+    });
+    document.getElementById('openWhatsApp').addEventListener('click', event => {
+      if (event.currentTarget.getAttribute('aria-disabled') === 'true') event.preventDefault();
     });
 
     form.addEventListener('submit', async event => {
@@ -518,8 +590,6 @@
       result.textContent = '';
       result.removeAttribute('data-kind');
       urlArea.hidden = true;
-      document.getElementById('whatsappArea').hidden = true;
-      document.getElementById('whatsappFeedback').textContent = '';
       copyFeedback.textContent = '';
       if (!form.reportValidity()) return;
       if (API_URL === '__TEST_API_URL__' || !/^https:\/\//i.test(API_URL)) {
@@ -683,6 +753,7 @@
 
     updateDateAndSourceWarning();
     setProofFields();
+    refreshWhatsAppDraft();
   </script>
 </body>
 </html>
