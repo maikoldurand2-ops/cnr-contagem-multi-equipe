@@ -52,10 +52,13 @@
     .street-head .section-title { margin: 0; }
     .street-count { font-size: .82rem; color: var(--muted); white-space: nowrap; }
     .street-list { display: grid; gap: 9px; }
-    .street-row { display: grid; grid-template-columns: minmax(0, 1fr) 118px; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; }
+    .street-row { display: grid; gap: 10px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
     .street-name { font-size: .9rem; line-height: 1.4; overflow-wrap: anywhere; }
-    .street-row label { margin: 0; font-size: .82rem; color: var(--muted); }
+    .street-controls { display: grid; grid-template-columns: 1fr 1fr 118px; gap: 10px; align-items: end; }
+    .street-field { min-width: 0; }
+    .street-row label { display: block; margin: 0 0 5px; font-size: .78rem; line-height: 1.25; color: var(--muted); }
     .street-row input { min-height: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+    .street-row input[readonly] { font-weight: 750; }
     .empty { border: 1px dashed #b8c9bf; border-radius: 12px; padding: 18px; text-align: center; color: var(--muted); background: #f8faf8; }
     .proof-box { border: 1px solid var(--line); border-radius: 14px; padding: 15px; background: #fbfdfb; }
     .privacy { margin: 12px 0 0; color: var(--muted); font-size: .82rem; }
@@ -74,6 +77,10 @@
     .returned-url { display: block; margin-top: 8px; color: #075f49; overflow-wrap: anywhere; }
     .copy-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
     .copy-feedback { color: var(--muted); font-size: .82rem; }
+    .whatsapp-box { margin-top: 18px; border: 1px solid #a9d4b8; border-radius: 14px; padding: 15px; background: var(--mint); }
+    .whatsapp-box h3 { margin: 0 0 6px; font-size: 1rem; }
+    .whatsapp-box p { margin: 0 0 10px; color: var(--muted); font-size: .85rem; }
+    .whatsapp-draft { width: 100%; min-height: 190px; resize: vertical; border: 1px solid #bdcdc4; border-radius: 10px; padding: 10px 12px; background: white; color: var(--ink); }
     .footer-note { margin: 18px 2px 0; color: var(--muted); font-size: .78rem; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
     @media (max-width: 600px) {
@@ -82,7 +89,9 @@
       .test-badge { font-size: .69rem; padding: 6px 9px; }
       .fields { grid-template-columns: 1fr; gap: 14px; }
       .field.full { grid-column: auto; }
-      .street-row { grid-template-columns: minmax(0, 1fr) 92px; gap: 9px; padding: 10px; }
+      .street-row { gap: 9px; padding: 10px; }
+      .street-controls { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .street-field.total-field { grid-column: 1 / -1; }
       .street-name { font-size: .85rem; }
       .street-row input { padding: 8px; }
       .actions { align-items: stretch; }
@@ -101,7 +110,7 @@
     </div>
     <header>
       <h1>Contagem diária</h1>
-      <p class="intro">Informe os totais do turno e o comprovante Timemark da equipe selecionada. Os campos de quantidade podem ficar vazios quando não houver registro.</p>
+      <p class="intro">Informe os quantitativos do turno e o comprovante Timemark da equipe selecionada. Em cada logradouro, informe usuários em uso e não em uso; ambos devem ser preenchidos quando houver registro.</p>
     </header>
 
     <aside class="notice" role="note">
@@ -144,7 +153,7 @@
         <h2 class="section-title">Logradouros da equipe</h2>
         <span id="streetCount" class="street-count" aria-live="polite"></span>
       </div>
-      <p class="hint" style="margin: -5px 0 13px">Preencha apenas as quantidades que deseja registrar. Zero é um valor válido; campo vazio será omitido.</p>
+      <p class="hint" style="margin: -5px 0 13px">Informe as duas quantidades para cada logradouro que deseja registrar. Zero explícito é válido; se uma das duas estiver preenchida, a outra também é obrigatória. O total é calculado automaticamente.</p>
       <div id="streetList" class="street-list" aria-live="polite">
         <div class="empty">Selecione uma equipe para ver seus logradouros.</div>
       </div>
@@ -185,6 +194,17 @@
           <span id="copyFeedback" class="copy-feedback" aria-live="polite"></span>
         </div>
       </div>
+      <section id="whatsappArea" class="whatsapp-box" aria-labelledby="whatsappTitle" hidden>
+        <h3 id="whatsappTitle">Rascunho manual para WhatsApp</h3>
+        <p>Revise e copie o texto ou abra o WhatsApp para continuar manualmente. Nada será enviado automaticamente.</p>
+        <label for="whatsappDraft">Texto do rascunho</label>
+        <textarea id="whatsappDraft" class="whatsapp-draft" readonly></textarea>
+        <div class="copy-row">
+          <button id="copyWhatsApp" class="secondary" type="button">Copiar texto</button>
+          <a id="openWhatsApp" class="secondary" target="_blank" rel="noopener noreferrer">Abrir WhatsApp</a>
+          <span id="whatsappFeedback" class="copy-feedback" aria-live="polite"></span>
+        </div>
+      </section>
     </form>
     <p class="footer-note">A lista mostrada corresponde aos nomes de logradouros extraídos da estrutura de novembro de 2026, com espaços externos removidos para coincidir com o backend.</p>
   </main>
@@ -212,13 +232,13 @@
       ] },
       { id: 'pari1', nome: 'CnR Pari I', ruas: [
         'Praça Lourenço Francolino (Padre Vieira) - CnR Pari I',
-        'Rua Comendador Nestor Pereira próximo ao número 77 (prox. Centro de Acolhida Vivenda da Cidadania - CnR Pari I',
+        'Rua Comendador Nestor Pereira',
         'Rua Carnot próximo ao número 803 (BOM PRATO) - CnR Pari I',
-        'Praça Kantuta (proximo AMA/UBS Pari) - CnR Pari I',
-        'Rua das Olarias, 500 - Distrito: Pari'
+        'Praça Kantuta',
+        'Rua das Olarias'
       ] },
       { id: 'belem', nome: 'CnR Belém', ruas: [
-        'Avenida Celso Garcia 2231 (Fábrica de Cultura Belém) - CnR Belémzz',
+        'Avenida Celso Garcia 2231 (Fábrica de Cultura Belém) - CnR Belém',
         'Rua Nelson Cruz, 50 lateral da Fábrica de Cultura',
         'Rua Arthur Mota, 225 (Altura do viaduto Guadalajara) - CnR Belem',
         'Comunidade Pau Queimado (prox Motel Loop, Marginal Tietê) - CnR Belem',
@@ -342,23 +362,61 @@
       team.ruas.forEach((rua, index) => {
         const row = document.createElement('div');
         row.className = 'street-row';
-        const label = document.createElement('label');
-        label.className = 'street-name';
-        label.htmlFor = `total-${index}`;
-        label.textContent = rua;
-        const input = document.createElement('input');
-        input.id = `total-${index}`;
-        input.name = `total-${index}`;
-        input.type = 'number';
-        input.min = '0';
-        input.step = '1';
-        input.inputMode = 'numeric';
-        input.placeholder = '—';
-        input.setAttribute('aria-label', `Quantidade para ${rua}`);
-        input.addEventListener('input', () => input.setCustomValidity(''));
-        row.append(label, input);
+        const name = document.createElement('div');
+        name.className = 'street-name';
+        name.textContent = rua;
+        const controls = document.createElement('div');
+        controls.className = 'street-controls';
+        const makeInput = (id, labelText, readonly = false) => {
+          const field = document.createElement('div');
+          field.className = `street-field${readonly ? ' total-field' : ''}`;
+          const label = document.createElement('label');
+          label.htmlFor = id;
+          label.textContent = labelText;
+          const input = document.createElement('input');
+          input.id = id;
+          input.name = id;
+          input.type = 'text';
+          input.inputMode = 'numeric';
+          input.autocomplete = 'off';
+          input.placeholder = readonly ? 'Calculado' : '—';
+          input.setAttribute('aria-label', `${labelText} · ${rua}`);
+          if (readonly) {
+            input.readOnly = true;
+            input.setAttribute('aria-readonly', 'true');
+          } else {
+            input.pattern = '[0-9]*';
+            input.addEventListener('input', () => {
+              document.getElementById(`in-use-${index}`).setCustomValidity('');
+              document.getElementById(`not-in-use-${index}`).setCustomValidity('');
+              updateStreetTotal(index);
+            });
+          }
+          field.append(label, input);
+          return { field, input };
+        };
+        const inUse = makeInput(`in-use-${index}`, 'Usuários em uso');
+        const notInUse = makeInput(`not-in-use-${index}`, 'Usuários não em uso');
+        const total = makeInput(`total-${index}`, 'Total calculado', true);
+        controls.append(inUse.field, notInUse.field, total.field);
+        row.append(name, controls);
         streetList.append(row);
       });
+    }
+
+    function updateStreetTotal(index) {
+      const inUseInput = document.getElementById(`in-use-${index}`);
+      const notInUseInput = document.getElementById(`not-in-use-${index}`);
+      const totalInput = document.getElementById(`total-${index}`);
+      const parseCount = input => {
+        if (input.value === '' || !/^\d+$/.test(input.value)) return null;
+        const value = Number(input.value);
+        return Number.isSafeInteger(value) ? value : null;
+      };
+      const inUse = parseCount(inUseInput);
+      const notInUse = parseCount(notInUseInput);
+      const sum = inUse === null || notInUse === null ? NaN : inUse + notInUse;
+      totalInput.value = Number.isSafeInteger(sum) ? String(sum) : '';
     }
 
     function setProofFields() {
@@ -375,6 +433,48 @@
     function showMessage(message, kind) {
       result.textContent = message;
       result.dataset.kind = kind;
+    }
+
+    function buildWhatsAppDraft(records, dataIso, turno) {
+      const dataPt = new Intl.DateTimeFormat('pt-BR', {
+        timeZone: 'UTC', day: '2-digit', month: 'long', year: 'numeric'
+      }).format(new Date(`${dataIso}T12:00:00Z`));
+      return records.map(record => [
+        '📌Cena de uso diária',
+        '',
+        `✅ Rua: ${record.rua}`,
+        '',
+        `✅ Data: ${dataPt}`,
+        `✅ Horário: ${turno}`,
+        '',
+        `✅ N° de Usuários em situação de rua que ESTÃO EM USO: ${record.emUso}`,
+        '',
+        `✅ N° de Usuários em situação de rua QUE NÃO ESTÃO EM USO: ${record.naoEmUso}`,
+        '',
+        `✅ N° Total de abordagens: ${record.total}`
+      ].join('\n')).join('\n\n');
+    }
+
+    async function copyText(text, feedback, successMessage, failureMessage) {
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const temporary = document.createElement('textarea');
+          temporary.value = text;
+          temporary.setAttribute('readonly', '');
+          temporary.style.position = 'fixed';
+          temporary.style.opacity = '0';
+          document.body.append(temporary);
+          temporary.select();
+          const copied = document.execCommand('copy');
+          temporary.remove();
+          if (!copied) throw new Error('Falha ao copiar');
+        }
+        feedback.textContent = successMessage;
+      } catch (_) {
+        feedback.textContent = failureMessage;
+      }
     }
 
     function readImageAsBase64(file) {
@@ -405,26 +505,10 @@
     equipeSelect.addEventListener('change', renderStreets);
     proofMethod.addEventListener('change', setProofFields);
     document.getElementById('copyUrl').addEventListener('click', async () => {
-      const text = returnedUrl.href;
-      try {
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(text);
-        } else {
-          const temporary = document.createElement('textarea');
-          temporary.value = text;
-          temporary.setAttribute('readonly', '');
-          temporary.style.position = 'fixed';
-          temporary.style.opacity = '0';
-          document.body.append(temporary);
-          temporary.select();
-          const copied = document.execCommand('copy');
-          temporary.remove();
-          if (!copied) throw new Error('Falha ao copiar');
-        }
-        copyFeedback.textContent = 'URL copiada.';
-      } catch (_) {
-        copyFeedback.textContent = 'Não foi possível copiar automaticamente. Selecione e copie a URL acima.';
-      }
+      await copyText(returnedUrl.href, copyFeedback, 'URL copiada.', 'Não foi possível copiar automaticamente. Selecione e copie a URL acima.');
+    });
+    document.getElementById('copyWhatsApp').addEventListener('click', async () => {
+      await copyText(document.getElementById('whatsappDraft').value, document.getElementById('whatsappFeedback'), 'Rascunho copiado.', 'Não foi possível copiar automaticamente. Selecione e copie o texto acima.');
     });
 
     form.addEventListener('submit', async event => {
@@ -434,6 +518,8 @@
       result.textContent = '';
       result.removeAttribute('data-kind');
       urlArea.hidden = true;
+      document.getElementById('whatsappArea').hidden = true;
+      document.getElementById('whatsappFeedback').textContent = '';
       copyFeedback.textContent = '';
       if (!form.reportValidity()) return;
       if (API_URL === '__TEST_API_URL__' || !/^https:\/\//i.test(API_URL)) {
@@ -444,25 +530,47 @@
       const teamId = equipeSelect.value;
       const team = TEAMS.find(item => item.id === teamId);
       const registros = [];
+      const whatsappRecords = [];
       if (team) {
         team.ruas.forEach((rua, index) => {
-          const input = document.getElementById(`total-${index}`);
-          input.setCustomValidity('');
-          if (input.value === '') return;
-          const total = Number(input.value);
-          if (!Number.isSafeInteger(total) || total < 0) {
-            input.setCustomValidity('Informe um número inteiro maior ou igual a zero.');
-          } else {
-            input.setCustomValidity('');
-            registros.push({ rua, total });
+          const inUseInput = document.getElementById(`in-use-${index}`);
+          const notInUseInput = document.getElementById(`not-in-use-${index}`);
+          inUseInput.setCustomValidity('');
+          notInUseInput.setCustomValidity('');
+          const inUseRaw = inUseInput.value;
+          const notInUseRaw = notInUseInput.value;
+          if (inUseRaw === '' && notInUseRaw === '') return;
+          if (inUseRaw === '' || notInUseRaw === '') {
+            const missing = inUseRaw === '' ? inUseInput : notInUseInput;
+            missing.setCustomValidity('Informe ambas as quantidades; use 0 quando não houver usuários.');
+            return;
           }
+          const validCount = value => /^\d+$/.test(value) && Number.isSafeInteger(Number(value));
+          if (!validCount(inUseRaw)) inUseInput.setCustomValidity('Informe um número inteiro não negativo e seguro.');
+          if (!validCount(notInUseRaw)) notInUseInput.setCustomValidity('Informe um número inteiro não negativo e seguro.');
+          if (!validCount(inUseRaw) || !validCount(notInUseRaw)) return;
+          const emUso = Number(inUseRaw);
+          const naoEmUso = Number(notInUseRaw);
+          const total = emUso + naoEmUso;
+          if (!Number.isSafeInteger(total)) {
+            inUseInput.setCustomValidity('A soma deve ser um número inteiro seguro.');
+            notInUseInput.setCustomValidity('A soma deve ser um número inteiro seguro.');
+            return;
+          }
+          document.getElementById(`total-${index}`).value = String(total);
+          registros.push({ rua, total });
+          whatsappRecords.push({ rua, emUso, naoEmUso, total });
         });
       }
-      if (!team || registros.length === 0) {
-        showMessage('Preencha pelo menos uma quantidade para este envio. Zero também é válido.', 'error');
+      if (!team) {
+        showMessage('Selecione uma equipe válida para este envio.', 'error');
         return;
       }
       if (!form.reportValidity()) return;
+      if (registros.length === 0) {
+        showMessage('Preencha ambas as quantidades de pelo menos um logradouro. Zero explícito também é válido.', 'error');
+        return;
+      }
 
       const method = proofMethod.value;
       let fotoBase64 = '';
@@ -498,11 +606,13 @@
       let requestStarted = false;
       try {
         if (method === 'image') fotoBase64 = await readImageAsBase64(proofImage.files[0]);
+        const dataIso = saoPauloToday();
+        const turno = turnoSelect.value;
         const payload = {
           equipeId: teamId,
           pin: pinInput.value,
-          turno: turnoSelect.value,
-          dataIso: saoPauloToday(),
+          turno,
+          dataIso,
           registros,
           fotoBase64,
           fotoMime,
@@ -527,6 +637,10 @@
           clearPin();
           showMessage('Envio confirmado pela API (status: ok).', 'success');
           sendButton.textContent = 'Envio confirmado';
+          const draft = buildWhatsAppDraft(whatsappRecords, dataIso, turno);
+          document.getElementById('whatsappDraft').value = draft;
+          document.getElementById('openWhatsApp').href = `https://wa.me/?text=${encodeURIComponent(draft)}`;
+          document.getElementById('whatsappArea').hidden = false;
           const url = typeof answer.timemarkUrl === 'string' ? answer.timemarkUrl.trim() : '';
           if (url) {
             try {
