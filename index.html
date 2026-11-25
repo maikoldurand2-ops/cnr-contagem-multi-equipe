@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b27">
+  <title>Contagem diária · Multi-Equipe</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #18332d;
+      --muted: #63756f;
+      --line: #dce6df;
+      --paper: #fff;
+      --canvas: #f2f6f1;
+      --green: #176b52;
+      --green-dark: #10513e;
+      --mint: #e8f4ed;
+      --amber: #fff4d5;
+      --amber-ink: #684b08;
+      --red: #a83232;
+      --shadow: 0 16px 40px rgba(20, 49, 41, .08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--canvas); color: var(--ink); line-height: 1.5; }
+    button, input, select { font: inherit; }
+    .wrap { width: min(100% - 32px, 860px); margin: 0 auto; padding: 28px 0 56px; }
+    .topline { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .brand { font-size: .86rem; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; color: var(--green-dark); }
+    .test-badge { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #e7c46b; border-radius: 999px; padding: 7px 12px; background: var(--amber); color: var(--amber-ink); font-size: .76rem; font-weight: 850; letter-spacing: .06em; }
+    .test-badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #d08b00; }
+    header { margin-bottom: 22px; }
+    h1 { margin: 0; max-width: 680px; font-size: clamp(1.8rem, 6vw, 2.7rem); line-height: 1.12; letter-spacing: -.045em; }
+    .intro { color: var(--muted); margin: 10px 0 0; max-width: 650px; }
+    .notice { border: 1px solid #edd792; border-radius: 14px; padding: 13px 15px; background: var(--amber); color: var(--amber-ink); font-size: .9rem; margin: 0 0 20px; }
+    .notice strong { display: block; margin-bottom: 2px; }
+    .stale { display: none; margin-top: 8px; font-weight: 650; }
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); padding: clamp(18px, 4vw, 30px); }
+    .section-title { margin: 0 0 16px; font-size: 1.12rem; letter-spacing: -.02em; }
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field { min-width: 0; }
+    .field.full { grid-column: 1 / -1; }
+    label, .legend { display: block; margin: 0 0 7px; font-size: .9rem; font-weight: 720; }
+    .hint { display: block; margin-top: 6px; color: var(--muted); font-size: .8rem; }
+    input, select { display: block; width: 100%; min-height: 48px; border: 1px solid #bdcdc4; border-radius: 10px; padding: 10px 12px; background: #fff; color: var(--ink); }
+    input[type="file"] { padding: 9px; }
+    input:focus, select:focus, button:focus-visible, a:focus-visible { outline: 3px solid #87c9aa; outline-offset: 2px; border-color: var(--green); }
+    input[readonly] { background: #f5f8f5; color: #425850; }
+    .divider { height: 1px; background: var(--line); margin: 24px 0; }
+    .street-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin-bottom: 10px; }
+    .street-head .section-title { margin: 0; }
+    .street-count { font-size: .82rem; color: var(--muted); white-space: nowrap; }
+    .street-list { display: grid; gap: 9px; }
+    .street-row { display: grid; grid-template-columns: minmax(0, 1fr) 118px; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; }
+    .street-name { font-size: .9rem; line-height: 1.4; overflow-wrap: anywhere; }
+    .street-row label { margin: 0; font-size: .82rem; color: var(--muted); }
+    .street-row input { min-height: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+    .empty { border: 1px dashed #b8c9bf; border-radius: 12px; padding: 18px; text-align: center; color: var(--muted); background: #f8faf8; }
+    .proof-box { border: 1px solid var(--line); border-radius: 14px; padding: 15px; background: #fbfdfb; }
+    .privacy { margin: 12px 0 0; color: var(--muted); font-size: .82rem; }
+    .actions { margin-top: 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+    .primary, .secondary { display: inline-flex; justify-content: center; align-items: center; min-height: 48px; padding: 11px 18px; border: 0; border-radius: 11px; font-weight: 760; cursor: pointer; text-decoration: none; }
+    .primary { background: var(--green); color: white; }
+    .primary:hover:not(:disabled) { background: var(--green-dark); }
+    .primary:disabled { opacity: .62; cursor: not-allowed; }
+    .secondary { min-height: 40px; border: 1px solid #b9ccc1; background: white; color: var(--green-dark); }
+    .secondary:hover { background: var(--mint); }
+    .submit-hint { color: var(--muted); font-size: .8rem; }
+    .status { margin-top: 18px; padding: 14px 15px; border-radius: 12px; border: 1px solid var(--line); background: #f7faf7; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .status:empty { display: none; }
+    .status[data-kind="success"] { border-color: #a9d4b8; background: var(--mint); }
+    .status[data-kind="error"], .status[data-kind="uncertain"] { border-color: #e6b4ad; background: #fff0ed; color: #742b24; }
+    .returned-url { display: block; margin-top: 8px; color: #075f49; overflow-wrap: anywhere; }
+    .copy-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    .copy-feedback { color: var(--muted); font-size: .82rem; }
+    .footer-note { margin: 18px 2px 0; color: var(--muted); font-size: .78rem; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    @media (max-width: 600px) {
+      .wrap { width: min(100% - 22px, 860px); padding-top: 16px; }
+      .topline { align-items: flex-start; }
+      .test-badge { font-size: .69rem; padding: 6px 9px; }
+      .fields { grid-template-columns: 1fr; gap: 14px; }
+      .field.full { grid-column: auto; }
+      .street-row { grid-template-columns: minmax(0, 1fr) 92px; gap: 9px; padding: 10px; }
+      .street-name { font-size: .85rem; }
+      .street-row input { padding: 8px; }
+      .actions { align-items: stretch; }
+      .primary { width: 100%; }
+      .submit-hint { width: 100%; }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .primary, .secondary { transition: background-color .16s ease, opacity .16s ease; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topline">
+      <div class="brand">Contagem · Multi-Equipe</div>
+      <div class="test-badge" aria-label="Ambiente de teste com dados fictícios">PRUEBA / dados fictícios</div>
+    </div>
+    <header>
+      <h1>Contagem diária</h1>
+      <p class="intro">Informe os totais do turno e o comprovante Timemark da equipe selecionada. Os campos de quantidade podem ficar vazios quando não houver registro.</p>
+    </header>
+
+    <aside class="notice" role="note">
+      <strong>Ambiente de teste · dados fictícios</strong>
+      Esta página envia dados apenas à planilha de teste; não utilize dados reais. Confira equipe, data e turno antes de enviar.
+      <div id="staleNotice" class="stale" role="status"></div>
+    </aside>
+
+    <form id="countForm" class="card" novalidate>
+      <h2 class="section-title">Identificação do envio</h2>
+      <div class="fields">
+        <div class="field">
+          <label for="equipe">Equipe</label>
+          <select id="equipe" name="equipe" required>
+            <option value="">Selecione uma equipe</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="pin">PIN da equipe</label>
+          <input id="pin" name="pin" type="password" inputmode="numeric" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+          <span class="hint">O PIN não é salvo neste dispositivo nem exibido na tela.</span>
+        </div>
+        <div class="field">
+          <label for="dataHoje">Data de hoje · São Paulo</label>
+          <input id="dataHoje" type="text" readonly aria-readonly="true">
+          <span class="hint">Calculada automaticamente no fuso America/Sao_Paulo.</span>
+        </div>
+        <div class="field">
+          <label for="turno">Turno</label>
+          <select id="turno" name="turno" required>
+            <option value="">Selecione o turno</option>
+            <option value="10h">10h</option>
+            <option value="15h">15h</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="street-head">
+        <h2 class="section-title">Logradouros da equipe</h2>
+        <span id="streetCount" class="street-count" aria-live="polite"></span>
+      </div>
+      <p class="hint" style="margin: -5px 0 13px">Preencha apenas as quantidades que deseja registrar. Zero é um valor válido; campo vazio será omitido.</p>
+      <div id="streetList" class="street-list" aria-live="polite">
+        <div class="empty">Selecione uma equipe para ver seus logradouros.</div>
+      </div>
+
+      <div class="divider"></div>
+      <h2 class="section-title">Comprovante Timemark</h2>
+      <div class="fields">
+        <div class="field full">
+          <label for="proofMethod">Como deseja informar o comprovante?</label>
+          <select id="proofMethod" name="proofMethod" required>
+            <option value="">Selecione uma opção</option>
+            <option value="image">Enviar uma imagem</option>
+            <option value="link">Informar um link HTTPS</option>
+          </select>
+        </div>
+        <div id="imageField" class="field full" hidden>
+          <label for="proofImage">Imagem do Timemark</label>
+          <input id="proofImage" type="file" accept="image/*">
+          <span class="hint">A imagem será convertida em Base64 no navegador para o envio; não será salva localmente.</span>
+        </div>
+        <div id="linkField" class="field full" hidden>
+          <label for="proofLink">Link HTTPS do Timemark</label>
+          <input id="proofLink" type="url" inputmode="url" placeholder="https://..." autocomplete="url">
+          <span class="hint">Informe um endereço HTTPS completo.</span>
+        </div>
+      </div>
+      <p class="privacy">Não inclua informações pessoais no comprovante além do necessário. Ao enviar uma imagem, o comportamento do backend atual pode armazená-la no Drive com acesso por link. O backend original não grava a URL do comprovante na planilha; esta tela apenas exibirá e permitirá copiar a URL retornada pela API, quando houver.</p>
+
+      <div class="actions">
+        <button id="sendButton" class="primary" type="submit">Enviar contagem</button>
+        <span class="submit-hint">O envio só será confirmado quando a API responder com JSON <code>status: "ok"</code>.</span>
+      </div>
+      <div id="result" class="status" role="status" aria-live="polite" aria-atomic="true"></div>
+      <div id="urlArea" hidden>
+        <a id="returnedUrl" class="returned-url" target="_blank" rel="noopener noreferrer"></a>
+        <div class="copy-row">
+          <button id="copyUrl" class="secondary" type="button">Copiar URL</button>
+          <span id="copyFeedback" class="copy-feedback" aria-live="polite"></span>
+        </div>
+      </div>
+    </form>
+    <p class="footer-note">A lista mostrada corresponde aos nomes de logradouros extraídos da estrutura de novembro de 2026, com espaços externos removidos para coincidir com o backend.</p>
+  </main>
+
+  <script>
+    'use strict';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyY6pzKJbb4puOf8zV630sj7g4AVoUoyS3X_jEphP-pCyh9-ar-vtRrM0vQVvkQODcV1A/exec';
+    const SOURCE_MONTH = 'novembro';
+    const SOURCE_YEAR = '2026';
+    const TEAMS = [
+      { id: 'imperial', nome: 'CnR Parque Imperial', ruas: [
+        'Viaduto Arapua (Cercado)',
+        'Metrô Conceição: (Av Engenheiro Armando de Arruda Pereira n. 943)',
+        'Rua Mário Cardim x Rua Rio Grande (altura do n° 79)'
+      ] },
+      { id: 'mooca', nome: 'CnR Mooca', ruas: [
+        'Praça Barao do Tiete (Em frente à UPA Mooca - Dom Paulo Evaristo Arns) - CnR Mooca',
+        'Praça Vicente Mateus (Próximo ao IBCC Oncologia/ Radial Leste) - CnR Mooca',
+        'Praça José da Silva Campanella - Ao lado do Parque da Mooca - CnR Mooca',
+        'Rua Padre Adelino (Em frente ao Núcleo de Convivência São Martinho de Lima) - CnR Mooca',
+        'Rua Doutor Guilherme Ellis, 40 - Distrito: Mooca',
+        'Rua Bresser, 2315 – Distrito: Mooca',
+        'Rua Ipanema, 600 (Estação Bresser Mooca) - Distrito: Mooca',
+        'Rua Doutor Fomm, 260 – Distrito: Mooca (Próximo a UPA mooca)'
+      ] },
+      { id: 'pari1', nome: 'CnR Pari I', ruas: [
+        'Praça Lourenço Francolino (Padre Vieira) - CnR Pari I',
+        'Rua Comendador Nestor Pereira próximo ao número 77 (prox. Centro de Acolhida Vivenda da Cidadania - CnR Pari I',
+        'Rua Carnot próximo ao número 803 (BOM PRATO) - CnR Pari I',
+        'Praça Kantuta (proximo AMA/UBS Pari) - CnR Pari I',
+        'Rua das Olarias, 500 - Distrito: Pari'
+      ] },
+      { id: 'belem', nome: 'CnR Belém', ruas: [
+        'Avenida Celso Garcia 2231 (Fábrica de Cultura Belém) - CnR Belémzz',
+        'Rua Nelson Cruz, 50 lateral da Fábrica de Cultura',
+        'Rua Arthur Mota, 225 (Altura do viaduto Guadalajara) - CnR Belem',
+        'Comunidade Pau Queimado (prox Motel Loop, Marginal Tietê) - CnR Belem',
+        'Rua Bresser altura 1436 - CnR Belem',
+        'Praça Diva Sousa Purita - CnR Belem',
+        'Rua Conselheiro Cotegipe, 400 - CnR Belem',
+        'Rua Visconde de Parnaíba, 3600 - CnR Belem',
+        'Rua São Leopoldo 81, próximo CTA SMADS - Distrito: Belém',
+        'Rua 21 de Abril x Praça Dr. Clóvis Arthur Rodrigues - Belém'
+      ] },
+      { id: 'bras', nome: 'CnR Brás', ruas: [
+        'Rua Joaquim Nabuco, 147/ Rua da UBS Brás - CnR Brás',
+        'Largo da Concórdia, 412 (Em frente ao Lojão do Brás) - CnR Brás',
+        'Rua Doutor Almeida Lima, 79 (ao lado da CPTM Brás) - CnR Brás',
+        'Praça ítalo s/n / Rua Domingos Paiva - CnR Brás',
+        'Viaduto Alcantara Machado 990 (Tenda) - Proximo Radial Leste x Rua Palmerino Monaco, alt 540 - CnR Brás',
+        'Rua Monsenhor de Andrade, 746 - CnR Brás (Próximo ao Nucleo Restaurame)',
+        'Rua Piratininga, 965 embaixo do viaduto Alcântara'
+      ] },
+      { id: 'ipiranga', nome: 'CnR Ipiranga', ruas: [
+        'Av Almirante Delamare , altura 1524( buraco)',
+        'Av Presidente Wilson, altura nº  3500',
+        'Av. Almirante Delamare, 3033',
+        'Rua Atilio Bartalini (final da rua emendando com a Presidente Wilson)',
+        'Rua Michel Saliba',
+        'Rua Resende Costa',
+        'Rua Cristo Redentor',
+        'Praça Balint',
+        'Praça Altemar Dutra',
+        'Praça Monte Azul'
+      ] },
+      { id: 'aricanduva', nome: 'CnR Aricanduva', ruas: [
+        'Rua Francisco Pereira Souza, 117 - Vila Formosa (Ciclovia - na lateral do Cartório da avenida Solidônio Leite),',
+        'Rua Benedito Jacinto Mendes, altura numero 54 (PRAÇA GRIMALD)',
+        'Praça Arquipelago dos Açores, alt numero 33',
+        'Rua Amelia Vanso Magnólia, 16 (Morro do Araguaia)',
+        'Motel Jumbo - Av. Sapopemba, 5199',
+        'Avenida Aricanduva, altura do numero 4950 (BANANEIRA)',
+        "Praça São João Vicenzotto, s/n – toda a praça (CAIXA D'AGUA)",
+        'Avenida rio das pedras (Cemitério da Vila Formosa)',
+        'Embaixo do Viaduto Eng. Alberto Badra, Av. Aricanduva, altura numero 200 (MOQUEM)',
+        'Praça Padre Nelson Jose Nigrist (Praça Santo Eduardo, alt do 1646)',
+        'Mercado Atacadão',
+        'Rua Gedivaldo Calixto',
+        'Praça Pastor Alonço Belarmino de Lima',
+        'Praça Duere 2212',
+        'Praça Vicente Falcetta, 2538',
+        'Praça Aurelio Lombardi 3481',
+        'Praça Quinze de Outubro, altura numero 10'
+      ] }
+    ];
+
+    const form = document.getElementById('countForm');
+    const equipeSelect = document.getElementById('equipe');
+    const streetList = document.getElementById('streetList');
+    const streetCount = document.getElementById('streetCount');
+    const pinInput = document.getElementById('pin');
+    const turnoSelect = document.getElementById('turno');
+    const proofMethod = document.getElementById('proofMethod');
+    const proofImage = document.getElementById('proofImage');
+    const proofLink = document.getElementById('proofLink');
+    const imageField = document.getElementById('imageField');
+    const linkField = document.getElementById('linkField');
+    const sendButton = document.getElementById('sendButton');
+    const result = document.getElementById('result');
+    const urlArea = document.getElementById('urlArea');
+    const returnedUrl = document.getElementById('returnedUrl');
+    const copyFeedback = document.getElementById('copyFeedback');
+    let sending = false;
+    let finalOutcome = false;
+
+    for (const team of TEAMS) {
+      const option = document.createElement('option');
+      option.value = team.id;
+      option.textContent = team.nome;
+      equipeSelect.append(option);
+    }
+
+    function saoPauloToday() {
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit'
+      }).formatToParts(new Date());
+      const values = Object.fromEntries(parts.filter(p => p.type !== 'literal').map(p => [p.type, p.value]));
+      return `${values.year}-${values.month}-${values.day}`;
+    }
+
+    function updateDateAndSourceWarning() {
+      const iso = saoPauloToday();
+      document.getElementById('dataHoje').value = new Intl.DateTimeFormat('pt-BR', {
+        timeZone: 'America/Sao_Paulo', day: '2-digit', month: 'long', year: 'numeric'
+      }).format(new Date(`${iso}T12:00:00-03:00`));
+      const nowParts = new Intl.DateTimeFormat('en', {
+        timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit'
+      }).formatToParts(new Date());
+      const now = Object.fromEntries(nowParts.filter(p => p.type !== 'literal').map(p => [p.type, p.value]));
+      const sourceMonthNumber = new Date(`${SOURCE_YEAR}-${SOURCE_MONTH === 'novembro' ? '11' : '01'}-01T12:00:00Z`).getUTCMonth() + 1;
+      const currentMonthNumber = Number(now.month);
+      const sourceMonthName = SOURCE_MONTH.charAt(0).toUpperCase() + SOURCE_MONTH.slice(1);
+      const warning = document.getElementById('staleNotice');
+      if (Number(now.year) !== Number(SOURCE_YEAR) || currentMonthNumber !== sourceMonthNumber) {
+        warning.textContent = `A lista de logradouros foi extraída da estrutura de ${sourceMonthName}/${SOURCE_YEAR}; como o mês atual é ${currentMonthNumber}/${now.year}, ela pode estar desatualizada.`;
+        warning.style.display = 'block';
+      } else {
+        warning.style.display = 'none';
+        warning.textContent = '';
+      }
+    }
+
+    function renderStreets() {
+      const team = TEAMS.find(item => item.id === equipeSelect.value);
+      streetList.replaceChildren();
+      if (!team) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = 'Selecione uma equipe para ver seus logradouros.';
+        streetList.append(empty);
+        streetCount.textContent = '';
+        return;
+      }
+      streetCount.textContent = `${team.ruas.length} ${team.ruas.length === 1 ? 'logradouro' : 'logradouros'}`;
+      team.ruas.forEach((rua, index) => {
+        const row = document.createElement('div');
+        row.className = 'street-row';
+        const label = document.createElement('label');
+        label.className = 'street-name';
+        label.htmlFor = `total-${index}`;
+        label.textContent = rua;
+        const input = document.createElement('input');
+        input.id = `total-${index}`;
+        input.name = `total-${index}`;
+        input.type = 'number';
+        input.min = '0';
+        input.step = '1';
+        input.inputMode = 'numeric';
+        input.placeholder = '—';
+        input.setAttribute('aria-label', `Quantidade para ${rua}`);
+        input.addEventListener('input', () => input.setCustomValidity(''));
+        row.append(label, input);
+        streetList.append(row);
+      });
+    }
+
+    function setProofFields() {
+      const imageMode = proofMethod.value === 'image';
+      const linkMode = proofMethod.value === 'link';
+      imageField.hidden = !imageMode;
+      linkField.hidden = !linkMode;
+      proofImage.required = imageMode;
+      proofLink.required = linkMode;
+      if (!imageMode) proofImage.value = '';
+      if (!linkMode) proofLink.value = '';
+    }
+
+    function showMessage(message, kind) {
+      result.textContent = message;
+      result.dataset.kind = kind;
+    }
+
+    function readImageAsBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('Não foi possível ler a imagem selecionada.'));
+        reader.onload = () => {
+          const dataUrl = String(reader.result || '');
+          const comma = dataUrl.indexOf(',');
+          if (comma < 0) return reject(new Error('Não foi possível converter a imagem para Base64.'));
+          resolve(dataUrl.slice(comma + 1));
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function clearPin() {
+      pinInput.value = '';
+    }
+
+    function lockAfterUnknownOutcome(message) {
+      finalOutcome = true;
+      sendButton.disabled = true;
+      clearPin();
+      showMessage(message, 'uncertain');
+    }
+
+    equipeSelect.addEventListener('change', renderStreets);
+    proofMethod.addEventListener('change', setProofFields);
+    document.getElementById('copyUrl').addEventListener('click', async () => {
+      const text = returnedUrl.href;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const temporary = document.createElement('textarea');
+          temporary.value = text;
+          temporary.setAttribute('readonly', '');
+          temporary.style.position = 'fixed';
+          temporary.style.opacity = '0';
+          document.body.append(temporary);
+          temporary.select();
+          const copied = document.execCommand('copy');
+          temporary.remove();
+          if (!copied) throw new Error('Falha ao copiar');
+        }
+        copyFeedback.textContent = 'URL copiada.';
+      } catch (_) {
+        copyFeedback.textContent = 'Não foi possível copiar automaticamente. Selecione e copie a URL acima.';
+      }
+    });
+
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (sending || finalOutcome) return;
+      updateDateAndSourceWarning();
+      result.textContent = '';
+      result.removeAttribute('data-kind');
+      urlArea.hidden = true;
+      copyFeedback.textContent = '';
+      if (!form.reportValidity()) return;
+      if (API_URL === '__TEST_API_URL__' || !/^https:\/\//i.test(API_URL)) {
+        showMessage('Endereço da API de teste ainda não configurado. Nenhum dado foi enviado.', 'error');
+        return;
+      }
+
+      const teamId = equipeSelect.value;
+      const team = TEAMS.find(item => item.id === teamId);
+      const registros = [];
+      if (team) {
+        team.ruas.forEach((rua, index) => {
+          const input = document.getElementById(`total-${index}`);
+          input.setCustomValidity('');
+          if (input.value === '') return;
+          const total = Number(input.value);
+          if (!Number.isSafeInteger(total) || total < 0) {
+            input.setCustomValidity('Informe um número inteiro maior ou igual a zero.');
+          } else {
+            input.setCustomValidity('');
+            registros.push({ rua, total });
+          }
+        });
+      }
+      if (!team || registros.length === 0) {
+        showMessage('Preencha pelo menos uma quantidade para este envio. Zero também é válido.', 'error');
+        return;
+      }
+      if (!form.reportValidity()) return;
+
+      const method = proofMethod.value;
+      let fotoBase64 = '';
+      let fotoMime = '';
+      let fotoNome = '';
+      let timemarkLink = '';
+      if (method === 'image') {
+        const file = proofImage.files && proofImage.files[0];
+        if (!file || !file.type || !file.type.startsWith('image/')) {
+          showMessage('Selecione um arquivo de imagem válido para o comprovante.', 'error');
+          return;
+        }
+        fotoMime = file.type;
+        fotoNome = file.name;
+      } else if (method === 'link') {
+        try {
+          const parsed = new URL(proofLink.value.trim());
+          if (parsed.protocol !== 'https:') throw new Error('HTTPS obrigatório');
+          timemarkLink = parsed.href;
+        } catch (_) {
+          showMessage('Informe um link HTTPS válido para o comprovante Timemark.', 'error');
+          proofLink.focus();
+          return;
+        }
+      } else {
+        showMessage('O comprovante Timemark é obrigatório. Escolha uma imagem ou um link HTTPS.', 'error');
+        return;
+      }
+
+      sending = true;
+      sendButton.disabled = true;
+      sendButton.textContent = 'Enviando…';
+      let requestStarted = false;
+      try {
+        if (method === 'image') fotoBase64 = await readImageAsBase64(proofImage.files[0]);
+        const payload = {
+          equipeId: teamId,
+          pin: pinInput.value,
+          turno: turnoSelect.value,
+          dataIso: saoPauloToday(),
+          registros,
+          fotoBase64,
+          fotoMime,
+          fotoNome,
+          timemarkLink
+        };
+        requestStarted = true;
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+          body: JSON.stringify(payload)
+        });
+        let answer;
+        try {
+          answer = await response.json();
+        } catch (_) {
+          lockAfterUnknownOutcome('A resposta da API não pôde ser interpretada. O resultado é incerto: não reenvie antes de verificar a planilha.');
+          return;
+        }
+        if (answer && answer.status === 'ok' && response.ok) {
+          finalOutcome = true;
+          clearPin();
+          showMessage('Envio confirmado pela API (status: ok).', 'success');
+          sendButton.textContent = 'Envio confirmado';
+          const url = typeof answer.timemarkUrl === 'string' ? answer.timemarkUrl.trim() : '';
+          if (url) {
+            try {
+              const parsedUrl = new URL(url);
+              if (parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'http:') {
+                returnedUrl.href = parsedUrl.href;
+                returnedUrl.textContent = `URL do comprovante retornada pela API: ${parsedUrl.href}`;
+                urlArea.hidden = false;
+              }
+            } catch (_) { /* URL inválida não é exibida como link clicável. */ }
+          }
+        } else if (answer && answer.status === 'error') {
+          clearPin();
+          const detail = typeof answer.message === 'string' && answer.message ? answer.message : 'A API informou status error.';
+          if (/^Erro interno:/i.test(detail)) {
+            lockAfterUnknownOutcome(`Erro interno da API: ${detail}. O resultado pode ser parcial; não reenvie antes de verificar a planilha.`);
+          } else {
+            showMessage(`A API recusou o envio: ${detail}`, 'error');
+            sendButton.disabled = false;
+            sendButton.textContent = 'Enviar contagem';
+          }
+        } else {
+          lockAfterUnknownOutcome('A API respondeu sem um status reconhecido. O resultado é incerto: não reenvie antes de verificar a planilha.');
+        }
+      } catch (error) {
+        if (requestStarted) {
+          lockAfterUnknownOutcome(`Falha de rede ou de leitura da resposta: ${error.message || 'erro desconhecido'}. O resultado do envio é incerto; não reenvie antes de verificar a planilha.`);
+        } else {
+          clearPin();
+          showMessage(`Não foi possível preparar o comprovante; nenhum envio foi iniciado. ${error.message || ''}`, 'error');
+        }
+      } finally {
+        sending = false;
+        if (!finalOutcome && sendButton.textContent === 'Enviando…') {
+          sendButton.disabled = false;
+          sendButton.textContent = 'Enviar contagem';
+        }
+      }
+    });
+
+    updateDateAndSourceWarning();
+    setProofFields();
+  </script>
+</body>
+</html>
