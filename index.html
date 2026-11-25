@@ -98,7 +98,6 @@
   <main class="wrap">
     <div class="topline">
       <div class="brand">Contagem · Multi-Equipe</div>
-      <div class="test-badge" aria-label="Ambiente de teste com dados fictícios">TESTE / dados fictícios</div>
     </div>
     <header>
       <h1>Contagem diária</h1>
@@ -106,8 +105,8 @@
     </header>
 
     <aside class="notice" role="note">
-      <strong>Ambiente de teste · dados fictícios</strong>
-      Esta página envia dados apenas à planilha de teste; não utilize dados reais. Confira equipe, data e turno antes de enviar.
+      <strong>Destino dos registros</strong>
+      As contagens vão para a planilha diária de produção. O link do comprovante Timemark fica na aba “Registros do aplicativo” da planilha de cópia. Confira equipe, data e turno antes de enviar.
       <div id="staleNotice" class="stale" role="status"></div>
     </aside>
 
@@ -172,7 +171,7 @@
           <span class="hint">Informe um endereço HTTPS completo.</span>
         </div>
       </div>
-      <p class="privacy">Não inclua informações pessoais no comprovante além do necessário. O link do comprovante será registrado na aba “Registros do aplicativo” da planilha. Imagens enviadas são armazenadas no Drive e podem ser abertas por qualquer pessoa com o link; para links informados, confira as permissões de acesso.</p>
+      <p class="privacy">Não inclua informações pessoais no comprovante além do necessário. O link do comprovante será registrado na aba “Registros do aplicativo” da planilha de cópia. Imagens enviadas são armazenadas no Drive e podem ser abertas por qualquer pessoa com o link; para links informados, confira as permissões de acesso.</p>
 
       <div class="actions">
         <button id="sendButton" class="primary" type="submit">Enviar contagem</button>
@@ -192,7 +191,7 @@
 
   <script>
     'use strict';
-    const API_URL = 'https://script.google.com/macros/s/AKfycbyY6pzKJbb4puOf8zV630sj7g4AVoUoyS3X_jEphP-pCyh9-ar-vtRrM0vQVvkQODcV1A/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzUWrLa8Nc3B6w-nYZMK8BDB3S7zCzuvMB138NbE521OQRMAEznk_JHgSgdo9rPoSye/exec';
     const SOURCE_MONTH = 'novembro';
     const SOURCE_YEAR = '2026';
     const TEAMS = [
@@ -438,7 +437,7 @@
       copyFeedback.textContent = '';
       if (!form.reportValidity()) return;
       if (API_URL === '__TEST_API_URL__' || !/^https:\/\//i.test(API_URL)) {
-        showMessage('Endereço da API de teste ainda não configurado. Nenhum dado foi enviado.', 'error');
+        showMessage('Endereço da API não configurado. Nenhum dado foi enviado.', 'error');
         return;
       }
 
@@ -520,7 +519,7 @@
         try {
           answer = await response.json();
         } catch (_) {
-          lockAfterUnknownOutcome('A resposta da API não pôde ser interpretada. O resultado é incerto: não reenvie antes de verificar a planilha.');
+          lockAfterUnknownOutcome('A resposta da API não pôde ser interpretada. O resultado é incerto: não reenvie antes de verificar as duas planilhas.');
           return;
         }
         if (answer && answer.status === 'ok' && response.ok) {
@@ -543,18 +542,18 @@
           clearPin();
           const detail = typeof answer.message === 'string' && answer.message ? answer.message : 'A API informou status error.';
           if (/^Erro interno:/i.test(detail)) {
-            lockAfterUnknownOutcome(`Erro interno da API: ${detail}. O resultado pode ser parcial; não reenvie antes de verificar a planilha.`);
+            lockAfterUnknownOutcome(`Erro interno da API: ${detail}. O resultado pode ser parcial; não reenvie antes de verificar as duas planilhas.`);
           } else {
             showMessage(`A API recusou o envio: ${detail}`, 'error');
             sendButton.disabled = false;
             sendButton.textContent = 'Enviar contagem';
           }
         } else {
-          lockAfterUnknownOutcome('A API respondeu sem um status reconhecido. O resultado é incerto: não reenvie antes de verificar a planilha.');
+          lockAfterUnknownOutcome('A API respondeu sem um status reconhecido. O resultado é incerto: não reenvie antes de verificar as duas planilhas.');
         }
       } catch (error) {
         if (requestStarted) {
-          lockAfterUnknownOutcome(`Falha de rede ou de leitura da resposta: ${error.message || 'erro desconhecido'}. O resultado do envio é incerto; não reenvie antes de verificar a planilha.`);
+          lockAfterUnknownOutcome(`Falha de rede ou de leitura da resposta: ${error.message || 'erro desconhecido'}. O resultado do envio é incerto; não reenvie antes de verificar as duas planilhas.`);
         } else {
           clearPin();
           showMessage(`Não foi possível preparar o comprovante; nenhum envio foi iniciado. ${error.message || ''}`, 'error');
