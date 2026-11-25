@@ -45,7 +45,7 @@
     .hint { display: block; margin-top: 6px; color: var(--muted); font-size: .8rem; }
     input, select { display: block; width: 100%; min-height: 48px; border: 1px solid #bdcdc4; border-radius: 10px; padding: 10px 12px; background: #fff; color: var(--ink); }
     input[type="file"] { padding: 9px; }
-    input:focus, select:focus, button:focus-visible, a:focus-visible { outline: 3px solid #87c9aa; outline-offset: 2px; border-color: var(--green); }
+    input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible { outline: 3px solid #87c9aa; outline-offset: 2px; border-color: var(--green); }
     input[readonly] { background: #f5f8f5; color: #425850; }
     .divider { height: 1px; background: var(--line); margin: 24px 0; }
     .street-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin-bottom: 10px; }
@@ -208,6 +208,54 @@
         </div>
       </section>
     </form>
+    <section id="weeklySection" class="card" aria-labelledby="weeklyTitle" style="margin-top:22px">
+      <header>
+        <h2 id="weeklyTitle" class="section-title">Cena de uso semanal</h2>
+        <p class="intro">Preencha os dados semanais para montar um texto revisável. A rua e a data são informadas manualmente; os logradouros da contagem diária não são presumidos.</p>
+      </header>
+      <form id="weeklyForm" novalidate>
+        <div class="fields">
+          <div class="field"><label for="weeklyRua">Rua</label><input id="weeklyRua" name="rua" type="text" autocomplete="off" required></div>
+          <div class="field"><label for="weeklyData">Data (dia/mês/ano)</label><input id="weeklyData" name="data" type="text" inputmode="numeric" placeholder="DD/MM/AAAA" pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}" aria-describedby="weeklyDateHint" required><span id="weeklyDateHint" class="hint">Digite a data manualmente no formato DD/MM/AAAA.</span></div>
+          <div class="field"><label for="weeklyHorario">Horário</label><input id="weeklyHorario" name="horario" type="time" required></div>
+          <div class="field"><label for="weeklyBarracas">Total de barracas</label><input id="weeklyBarracas" name="barracas" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required></div>
+        </div>
+        <div class="divider"></div>
+        <fieldset style="border:0;padding:0;margin:0">
+          <legend class="section-title">Pessoas por categoria</legend>
+          <p class="hint" style="margin: -8px 0 14px">Informe números inteiros não negativos. Zero é diferente de campo vazio. O total é calculado a partir destas três categorias.</p>
+          <div class="fields">
+            <div class="field"><label for="weeklyRuaUso">Usuários em situação de rua em uso</label><input id="weeklyRuaUso" name="ruaUso" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required></div>
+            <div class="field"><label for="weeklyRuaSemUso">Usuários em situação de rua não em uso</label><input id="weeklyRuaSemUso" name="ruaSemUso" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required></div>
+            <div class="field"><label for="weeklyNaoPopRua">Usuários que não são Pop Rua e estão em uso</label><input id="weeklyNaoPopRua" name="naoPopRua" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required></div>
+            <div class="field"><label for="weeklyTotalPessoas">N° total (calculado)</label><input id="weeklyTotalPessoas" name="totalPessoas" type="text" readonly aria-readonly="true" aria-live="polite"></div>
+          </div>
+        </fieldset>
+        <div class="divider"></div>
+        <div class="fields">
+          <div class="field"><label for="weeklyAbordagens">N° total de abordagens</label><input id="weeklyAbordagens" name="abordagens" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required aria-describedby="approachesHint"><span id="approachesHint" class="hint">Entrada manual; o total de abordagens não é inferido.</span></div>
+          <div class="field"><label for="weeklyPeriodo">Período (M/T)</label><select id="weeklyPeriodo" name="periodo"><option value="">Não informado</option><option value="Manhã">Manhã</option><option value="Tarde">Tarde</option><option value="Noite">Noite</option><option value="Madrugada">Madrugada</option></select></div>
+          <div class="field"><label for="weeklyGestante">Gestante</label><input id="weeklyGestante" name="gestante" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required></div>
+          <div class="field"><label for="weeklyCriancas">Crianças</label><input id="weeklyCriancas" name="criancas" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required></div>
+          <div class="field"><label for="weeklyAdolescentes">Adolescentes</label><input id="weeklyAdolescentes" name="adolescentes" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required></div>
+          <div class="field"><label for="weeklyIdoso">Idoso</label><input id="weeklyIdoso" name="idoso" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required></div>
+          <div class="field"><label for="weeklyPcd">PCD</label><input id="weeklyPcd" name="pcd" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off" required></div>
+          <div class="field full"><label for="weeklySubstancias">Tipo de substâncias</label><textarea id="weeklySubstancias" name="substancias" rows="2" class="whatsapp-draft" style="min-height:88px" autocomplete="off"></textarea></div>
+          <div class="field full"><label for="weeklyEncaminhamentos">Encaminhamentos para CAPS, programa Reencontro, vaga de acolhimento</label><textarea id="weeklyEncaminhamentos" name="encaminhamentos" rows="2" class="whatsapp-draft" style="min-height:88px" autocomplete="off"></textarea></div>
+          <div class="field full"><label for="weeklyIntercorrencias">Intercorrências</label><textarea id="weeklyIntercorrencias" name="intercorrencias" rows="2" class="whatsapp-draft" style="min-height:88px" autocomplete="off"></textarea></div>
+          <div class="field full"><label for="weeklyObservacoes">Observações</label><textarea id="weeklyObservacoes" name="observacoes" rows="3" class="whatsapp-draft" style="min-height:100px" autocomplete="off"></textarea></div>
+        </div>
+        <p class="privacy">Esta seção apenas monta um texto no navegador. Não grava dados em planilhas e não envia mensagens automaticamente.</p>
+        <div class="actions"><button id="generateWeekly" class="primary" type="button">Gerar rascunho semanal</button><span class="submit-hint">Revise o texto antes de copiar ou abrir o WhatsApp.</span></div>
+        <div id="weeklyStatus" class="status" role="status" aria-live="polite" aria-atomic="true"></div>
+        <section id="weeklyOutputArea" class="whatsapp-box" aria-labelledby="weeklyOutputTitle" hidden>
+          <h3 id="weeklyOutputTitle">Texto para revisão</h3>
+          <p>Copiar apenas copia o texto. “Abrir WhatsApp” prepara uma conversa com o rascunho; você ainda precisa revisar e enviar por conta própria.</p>
+          <label for="weeklyOutput">Texto gerado</label><textarea id="weeklyOutput" class="whatsapp-draft" readonly></textarea>
+          <div class="copy-row"><button id="copyWeekly" class="secondary" type="button">Copiar texto</button><a id="openWeeklyWhatsApp" class="secondary" target="_blank" rel="noopener noreferrer">Abrir WhatsApp manualmente</a><span id="weeklyCopyFeedback" class="copy-feedback" aria-live="polite"></span></div>
+        </section>
+      </form>
+    </section>
     <p class="footer-note">A lista mostrada corresponde aos nomes de logradouros extraídos da estrutura de novembro de 2026, com espaços externos removidos para coincidir com o backend.</p>
   </main>
 
@@ -542,6 +590,122 @@
       }
     }
 
+    function parseWeeklyCount(raw) {
+      if (typeof raw !== 'string' || !/^\d+$/.test(raw)) return null;
+      const value = Number(raw);
+      return Number.isSafeInteger(value) ? value : null;
+    }
+
+    function isValidBrazilianDate(raw) {
+      const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(raw);
+      if (!match) return false;
+      const day = Number(match[1]), month = Number(match[2]), year = Number(match[3]);
+      if (year < 1 || month < 1 || month > 12 || day < 1) return false;
+      return day <= new Date(Date.UTC(year, month, 0)).getUTCDate();
+    }
+
+    function buildWeeklyMessage(v) {
+      const optional = value => value.trim() || 'Não informado';
+      return [
+        '📌Cena de uso semanal',
+        '',
+        `✅ Rua: ${v.rua}`,
+        '',
+        `✅ Data: ${v.data}`,
+        '',
+        `✅ Horário: ${v.horario}`,
+        '',
+        `✅ Total de Barracas: ${v.barracas}`,
+        '',
+        `✅ N° de Usuários em situação de rua que ESTÃO EM USO: ${v.ruaUso}`,
+        '',
+        `✅ N° de Usuários em situação de rua QUE NÃO ESTÃO EM USO: ${v.ruaSemUso}`,
+        `✅ N° de Usuários que NÃO SÃO POP RUA E ESTÃO EM USO: ${v.naoPopRua}`,
+        '',
+        `✅ N° Total de abordagens: ${v.abordagens}`,
+        '',
+        `✅ N° Total: ${v.totalPessoas}`,
+        '',
+        `✅ Período (M/T): ${optional(v.periodo)}`,
+        '',
+        `✅ Gestante: ${v.gestante}`,
+        '',
+        `✅ Crianças: ${v.criancas}`,
+        '',
+        `✅ Adolescentes: ${v.adolescentes}`,
+        '',
+        `✅ Idoso: ${v.idoso}`,
+        '',
+        `✅ PCD: ${v.pcd}`,
+        '',
+        '✅ Tipo de Substâncias:',
+        optional(v.substancias),
+        '',
+        `✅ Encaminhamentos para CAPS, programa Reencontro, vaga de acolhimento: ${optional(v.encaminhamentos)}`,
+        '',
+        `✅ Intercorrências: ${optional(v.intercorrencias)}`,
+        '',
+        `✅ Observações: ${optional(v.observacoes)}`
+      ].join('\n');
+    }
+
+    function sumWeeklyCategories(values) {
+      if (values.length !== 3 || values.some(value => value === null)) return null;
+      const total = values.reduce((sum, value) => sum + value, 0);
+      return Number.isSafeInteger(total) ? total : null;
+    }
+
+    const weeklyForm = document.getElementById('weeklyForm');
+    const weeklyCountIds = ['weeklyBarracas', 'weeklyRuaUso', 'weeklyRuaSemUso', 'weeklyNaoPopRua', 'weeklyAbordagens', 'weeklyGestante', 'weeklyCriancas', 'weeklyAdolescentes', 'weeklyIdoso', 'weeklyPcd'];
+    const weeklyCategoryIds = ['weeklyRuaUso', 'weeklyRuaSemUso', 'weeklyNaoPopRua'];
+    const weeklyOutputArea = document.getElementById('weeklyOutputArea');
+    const weeklyOutput = document.getElementById('weeklyOutput');
+
+    function updateWeeklyTotal() {
+      const values = weeklyCategoryIds.map(id => parseWeeklyCount(document.getElementById(id).value));
+      const total = sumWeeklyCategories(values);
+      document.getElementById('weeklyTotalPessoas').value = total === null ? '' : String(total);
+    }
+
+    function clearWeeklyOutput() {
+      weeklyOutputArea.hidden = true;
+      weeklyOutput.value = '';
+      document.getElementById('openWeeklyWhatsApp').removeAttribute('href');
+      document.getElementById('weeklyCopyFeedback').textContent = '';
+      const status = document.getElementById('weeklyStatus');
+      status.textContent = '';
+      status.removeAttribute('data-kind');
+    }
+
+    function getWeeklyValues() {
+      const ruaInput = document.getElementById('weeklyRua');
+      const dateInput = document.getElementById('weeklyData');
+      ruaInput.setCustomValidity(ruaInput.value.trim() ? '' : 'Informe a rua.');
+      dateInput.setCustomValidity(isValidBrazilianDate(dateInput.value.trim()) ? '' : 'Informe uma data válida no formato DD/MM/AAAA.');
+      for (const id of weeklyCountIds) {
+        const input = document.getElementById(id);
+        input.setCustomValidity(parseWeeklyCount(input.value) === null ? 'Informe um número inteiro não negativo; use 0 quando for zero.' : '');
+      }
+      updateWeeklyTotal();
+      const categories = weeklyCategoryIds.map(id => parseWeeklyCount(document.getElementById(id).value));
+      const total = sumWeeklyCategories(categories);
+      if (categories.every(value => value !== null) && total === null) {
+        document.getElementById('weeklyRuaUso').setCustomValidity('A soma das três categorias excede o limite numérico seguro.');
+      }
+      if (!weeklyForm.reportValidity()) return null;
+      const raw = id => document.getElementById(id).value.trim();
+      return {
+        rua: raw('weeklyRua'), data: raw('weeklyData'), horario: raw('weeklyHorario'),
+        barracas: String(parseWeeklyCount(raw('weeklyBarracas'))), ruaUso: String(parseWeeklyCount(raw('weeklyRuaUso'))),
+        ruaSemUso: String(parseWeeklyCount(raw('weeklyRuaSemUso'))), naoPopRua: String(parseWeeklyCount(raw('weeklyNaoPopRua'))),
+        abordagens: String(parseWeeklyCount(raw('weeklyAbordagens'))), totalPessoas: String(total), periodo: raw('weeklyPeriodo'),
+        gestante: String(parseWeeklyCount(raw('weeklyGestante'))), criancas: String(parseWeeklyCount(raw('weeklyCriancas'))),
+        adolescentes: String(parseWeeklyCount(raw('weeklyAdolescentes'))), idoso: String(parseWeeklyCount(raw('weeklyIdoso'))),
+        pcd: String(parseWeeklyCount(raw('weeklyPcd'))), substancias: raw('weeklySubstancias'),
+        encaminhamentos: raw('weeklyEncaminhamentos'), intercorrencias: raw('weeklyIntercorrencias'), observacoes: raw('weeklyObservacoes')
+      };
+    }
+
     function readImageAsBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -581,6 +745,27 @@
     });
     document.getElementById('openWhatsApp').addEventListener('click', event => {
       if (event.currentTarget.getAttribute('aria-disabled') === 'true') event.preventDefault();
+    });
+    weeklyForm.addEventListener('input', event => {
+      event.target.setCustomValidity('');
+      updateWeeklyTotal();
+      clearWeeklyOutput();
+    });
+    weeklyForm.addEventListener('change', clearWeeklyOutput);
+    document.getElementById('generateWeekly').addEventListener('click', () => {
+      clearWeeklyOutput();
+      const values = getWeeklyValues();
+      if (!values) return;
+      const draft = buildWeeklyMessage(values);
+      weeklyOutput.value = draft;
+      document.getElementById('openWeeklyWhatsApp').href = `https://wa.me/?text=${encodeURIComponent(draft)}`;
+      weeklyOutputArea.hidden = false;
+      const status = document.getElementById('weeklyStatus');
+      status.textContent = 'Rascunho pronto para revisar. Nenhum dado foi enviado; copiar ou abrir o WhatsApp são ações manuais.';
+      status.dataset.kind = 'success';
+    });
+    document.getElementById('copyWeekly').addEventListener('click', async () => {
+      await copyText(weeklyOutput.value, document.getElementById('weeklyCopyFeedback'), 'Texto copiado.', 'Não foi possível copiar automaticamente. Selecione e copie o texto.');
     });
 
     form.addEventListener('submit', async event => {
@@ -754,6 +939,7 @@
     updateDateAndSourceWarning();
     setProofFields();
     refreshWhatsAppDraft();
+    updateWeeklyTotal();
   </script>
 </body>
 </html>
