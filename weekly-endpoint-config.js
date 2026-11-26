@@ -1,2 +1,3 @@
-/* Servicio público de solo lectura: nombres válidos de pestañas semanales. */
-window.CNR_WEEKLY_READ_API_URL = 'https://script.google.com/macros/s/AKfycbyvYqJbWtFvX9dvc8c80pnyDAJDJrJNJkWAyNJ05Q3x7DrPHK_BHvhplpd0CvilwhrQEw/exec';
+/* URL /exec da API semanal (Apps Script "CnR Semanal API"). Vazio = envio semanal bloqueado.
+   Ex.: 'https://script.google.com/macros/s/AKfy.../exec' (sem parâmetros). */
+window.CNR_WEEKLY_API_URL = '';
